@@ -8,8 +8,7 @@ export class VersionFinder {
   }
 
   findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
-    let foundDependencies: Dependency[] = [];
-    foundDependencies = foundDependencies.concat(searchDependencies);
+    const foundDependencies: Dependency[] = searchDependencies;
 
     searchDependencies.forEach((dep) => {
       dep.dependencies.forEach((subdep) => {
@@ -18,7 +17,6 @@ export class VersionFinder {
     });
 
     return [...new Set(foundDependencies)];
-    // return foundDependencies;
   }
 }
 
