@@ -7,5 +7,7 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/explicit-function-return-type': 0,
+    // 'max-len': [1, { code: 120 }],
+    "prettier/prettier": 2
   },
 };
