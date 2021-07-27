@@ -14,6 +14,10 @@ export class Dependency {
     this.supported = supported;
     this.dependencies = dependencies;
   }
+
+  static compare(firstDependency: Dependency, secondDependency: Dependency): number {
+    return secondDependency.version.localeCompare(firstDependency.version);
+  }
 }
 
 export default Dependency;

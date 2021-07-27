@@ -50,15 +50,11 @@ function getFamiliesFromDependency(foundDependencies: Dependency[]): Family[] {
   return foundFamilies;
 }
 
-function compare(firstDependency: Dependency, secondDependency: Dependency) {
-  return secondDependency.version.localeCompare(firstDependency.version);
-}
-
 function removeEarlierDependenciesFromDuplicateFamilies(
   foundDependencies: Dependency[],
   foundFamilies: Family[],
 ): Dependency[] {
-  foundDependencies.sort(compare);
+  foundDependencies.sort(Dependency.compare);
 
   foundFamilies.forEach((foundFamily) => {
     const dependenciesByFamily = foundDependencies.filter((foundDependency) => {
