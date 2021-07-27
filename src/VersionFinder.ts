@@ -9,7 +9,7 @@ export class VersionFinder {
   }
 
   findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
-    const foundDependencies: Dependency[] = searchDependencies;
+    let foundDependencies: Dependency[] = searchDependencies;
 
     searchDependencies.forEach((dep) => {
       dep.dependencies.forEach((subDep) => {
@@ -18,6 +18,10 @@ export class VersionFinder {
         });
         foundDependencies.push(subDep);
       });
+    });
+
+    foundDependencies = foundDependencies.filter((dependency) => {
+      return dependency.supported;
     });
 
     const foundFamilies: Family[] = getFamiliesFromDependency(foundDependencies);
@@ -55,6 +59,7 @@ function removeEarlierDependenciesFromDuplicateFamilies(
   foundFamilies: Family[],
 ): Dependency[] {
   foundDependencies.sort(compare);
+
   foundFamilies.forEach((foundFamily) => {
     const dependenciesByFamily = foundDependencies.filter((foundDependency) => {
       return foundDependency.family === foundFamily;
