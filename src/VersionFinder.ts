@@ -9,68 +9,68 @@ export class VersionFinder {
   }
 
   findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
-    let foundDependencies: Dependency[] = searchDependencies;
+    const foundDependencies: Dependency[] = searchDependencies;
 
     searchDependencies.forEach((dep) => {
       dep.dependencies.forEach((subDep) => {
         subDep.dependencies.forEach((subSubDep) => {
-          foundDependencies.push(subSubDep);
+          if (subSubDep.supported) {
+            foundDependencies.push(subSubDep);
+          }
         });
-        foundDependencies.push(subDep);
+        if (subDep.supported) {
+          foundDependencies.push(subDep);
+        }
       });
     });
 
-    foundDependencies = foundDependencies.filter((dependency) => {
-      return dependency.supported;
-    });
+    const foundFamilies: Family[] = this.getFamiliesFromDependency(foundDependencies);
 
-    const foundFamilies: Family[] = getFamiliesFromDependency(foundDependencies);
-
-    const foundDependenciesWithLatestFromEachFamily: Dependency[] = removeEarlierDependenciesFromDuplicateFamilies(
+    const foundDependenciesWithLatestFromEachFamily: Dependency[] = this.removeEarlierDependenciesFromDuplicateFamilies(
       foundDependencies,
       foundFamilies,
     );
 
     return [...new Set(foundDependenciesWithLatestFromEachFamily)];
   }
+
+  getFamiliesFromDependency(foundDependencies: Dependency[]): Family[] {
+    const foundFamilies: Family[] = [];
+    foundDependencies.forEach((dep) => {
+      const matchingDependencies = foundFamilies.filter((family) => {
+        return family === dep.family;
+      });
+      if (matchingDependencies.length < 1) {
+        foundFamilies.push(dep.family);
+      }
+    });
+    return foundFamilies;
+  }
+
+  removeEarlierDependenciesFromDuplicateFamilies(
+    foundDependencies: Dependency[],
+    foundFamilies: Family[],
+  ): Dependency[] {
+    foundDependencies.sort(Dependency.compare);
+
+    foundFamilies.forEach((foundFamily) => {
+      const dependenciesByFamily = foundDependencies.filter((foundDependency) => {
+        return foundDependency.family === foundFamily;
+      });
+      if (dependenciesByFamily.length > 1) {
+        let dontRemoveThisOne = true;
+        dependenciesByFamily.forEach((dep) => {
+          if (dontRemoveThisOne) {
+            dontRemoveThisOne = false;
+          } else {
+            const dependencyIndexToRemove = foundDependencies.indexOf(dep);
+            foundDependencies.splice(dependencyIndexToRemove, 1);
+          }
+        });
+      }
+    });
+    return foundDependencies;
+  }
 }
 
 export default VersionFinder;
-
-function getFamiliesFromDependency(foundDependencies: Dependency[]): Family[] {
-  const foundFamilies: Family[] = [];
-  foundDependencies.forEach((dep) => {
-    const matchingDependencies = foundFamilies.filter((family) => {
-      return family === dep.family;
-    });
-    if (matchingDependencies.length < 1) {
-      foundFamilies.push(dep.family);
-    }
-  });
-  return foundFamilies;
-}
-
-function removeEarlierDependenciesFromDuplicateFamilies(
-  foundDependencies: Dependency[],
-  foundFamilies: Family[],
-): Dependency[] {
-  foundDependencies.sort(Dependency.compare);
-
-  foundFamilies.forEach((foundFamily) => {
-    const dependenciesByFamily = foundDependencies.filter((foundDependency) => {
-      return foundDependency.family === foundFamily;
-    });
-    if (dependenciesByFamily.length > 1) {
-      let dontRemoveThisOne = true;
-      dependenciesByFamily.forEach((dep) => {
-        if (dontRemoveThisOne) {
-          dontRemoveThisOne = false;
-        } else {
-          const dependencyIndexToRemove = foundDependencies.indexOf(dep);
-          foundDependencies.splice(dependencyIndexToRemove, 1);
-        }
-      });
-    }
-  });
-  return foundDependencies;
-}
