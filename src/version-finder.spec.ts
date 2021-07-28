@@ -3,7 +3,7 @@ import Dependency from './Dependency';
 import Family from './Family';
 import VersionFinder from './VersionFinder';
 
-describe('version finder behaviour', () => {
+describe('get pre-reqs for releases', () => {
   it('should find a single entry when only that single entry exists', () => {
     const dependency = new Dependency(Math.random(), new Family(), '', true, []);
     const versionFinder = new VersionFinder([dependency]);
@@ -100,5 +100,39 @@ describe('version finder behaviour', () => {
 
     const result = versionFinder.findDependenciesFor([searchDependency]);
     expect(result.length).to.equal(1);
+  });
+});
+
+describe('get releases for pre-req', () => {
+  it('should find a single item if only one release exists', () => {
+    const productToQuery = new Dependency(Math.random(), new Family(), '', false, []);
+    const singleRelease = new Dependency(Math.random(), new Family(), '', false, [productToQuery]);
+    const storedDependencies: Dependency[] = [singleRelease, productToQuery];
+    const versionFinder = new VersionFinder(storedDependencies);
+
+    const result = versionFinder.whatProductsCanIRunWithDependency([productToQuery]);
+    expect(result).has.same.members([singleRelease]);
+  });
+  it('should find latest dependency that supports it', () => {
+    const queryProductFamily = new Family();
+    const queryProduct = new Dependency(Math.random(), queryProductFamily, '6.4', false, []);
+    const tooNewQueryProduct = new Dependency(Math.random(), queryProductFamily, '6.5', false, []);
+
+    const dependencyFamily = new Family();
+    const tooOldDependency = new Dependency(Math.random(), dependencyFamily, '1.0', false, [queryProduct]);
+    const justRightDependency = new Dependency(Math.random(), dependencyFamily, '2.0', false, [queryProduct]);
+    const tooNewDependency = new Dependency(Math.random(), dependencyFamily, '3.0', false, [tooNewQueryProduct]);
+
+    const storedDependencies: Dependency[] = [
+      queryProduct,
+      tooNewQueryProduct,
+      tooOldDependency,
+      justRightDependency,
+      tooNewDependency,
+    ];
+    const versionFinder = new VersionFinder(storedDependencies);
+
+    const result = versionFinder.whatProductsCanIRunWithDependency([queryProduct]);
+    expect(result).has.same.members([justRightDependency]);
   });
 });

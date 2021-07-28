@@ -8,6 +8,27 @@ export class VersionFinder {
     this.dependencies = dependencies;
   }
 
+  whatProductsCanIRunWithDependency(productsToQuery: Dependency[]): Dependency[] {
+    const foundDependencies: Dependency[] = [];
+
+    this.dependencies.forEach((dependency) => {
+      productsToQuery.forEach((productToQuery) => {
+        if (dependency.dependencies.includes(productToQuery)) {
+          foundDependencies.push(dependency);
+        }
+      });
+    });
+
+    const foundFamilies: Family[] = this.getFamiliesFromDependency(foundDependencies);
+
+    const foundDependenciesWithLatestFromEachFamily: Dependency[] = this.removeEarlierDependenciesFromDuplicateFamilies(
+      foundDependencies,
+      foundFamilies,
+    );
+
+    return foundDependenciesWithLatestFromEachFamily;
+  }
+
   findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
     const foundDependencies: Dependency[] = searchDependencies;
 
