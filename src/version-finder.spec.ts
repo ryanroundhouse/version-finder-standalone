@@ -109,8 +109,8 @@ describe('get pre-reqs for releases', () => {
 
 describe('get releases for pre-req', () => {
   it('should find a single item if only one release exists', () => {
-    const productToQuery = new Dependency(Math.random(), new Family(), '', false, []);
-    const singleRelease = new Dependency(Math.random(), new Family(), '', false, [productToQuery]);
+    const productToQuery = new Dependency(Math.random(), new Family(), '', true, []);
+    const singleRelease = new Dependency(Math.random(), new Family(), '', true, [productToQuery]);
     const storedDependencies: Dependency[] = [singleRelease, productToQuery];
     const versionFinder = new VersionFinder(storedDependencies);
 
@@ -119,13 +119,13 @@ describe('get releases for pre-req', () => {
   });
   it('should find latest dependency that supports it', () => {
     const queryProductFamily = new Family();
-    const queryProduct = new Dependency(Math.random(), queryProductFamily, '6.4', false, []);
-    const tooNewQueryProduct = new Dependency(Math.random(), queryProductFamily, '6.5', false, []);
+    const queryProduct = new Dependency(Math.random(), queryProductFamily, '6.4', true, []);
+    const tooNewQueryProduct = new Dependency(Math.random(), queryProductFamily, '6.5', true, []);
 
     const dependencyFamily = new Family();
-    const tooOldDependency = new Dependency(Math.random(), dependencyFamily, '1.0', false, [queryProduct]);
-    const justRightDependency = new Dependency(Math.random(), dependencyFamily, '2.0', false, [queryProduct]);
-    const tooNewDependency = new Dependency(Math.random(), dependencyFamily, '3.0', false, [tooNewQueryProduct]);
+    const tooOldDependency = new Dependency(Math.random(), dependencyFamily, '1.0', true, [queryProduct]);
+    const justRightDependency = new Dependency(Math.random(), dependencyFamily, '2.0', true, [queryProduct]);
+    const tooNewDependency = new Dependency(Math.random(), dependencyFamily, '3.0', true, [tooNewQueryProduct]);
 
     const storedDependencies: Dependency[] = [
       queryProduct,
@@ -138,5 +138,27 @@ describe('get releases for pre-req', () => {
 
     const result = versionFinder.whatProductsCanIRunWithDependency([queryProduct]);
     expect(result).has.same.members([justRightDependency]);
+  });
+  it('shouldnt return dependencies that arent supported', () => {
+    const productToQuery = new Dependency(Math.random(), new Family(), '', true, []);
+    const unsupportedRelease = new Dependency(Math.random(), new Family(), '', false, [productToQuery]);
+    const storedDependencies: Dependency[] = [unsupportedRelease, productToQuery];
+    const versionFinder = new VersionFinder(storedDependencies);
+
+    const result = versionFinder.whatProductsCanIRunWithDependency([productToQuery]);
+    expect(result).has.same.members([]);
+  });
+  it('if no product matches your version return one from an earlier version', () => {
+    const searchFamily = new Family();
+    const olderRelease = new Dependency(Math.random(), searchFamily, '1.0', true, []);
+    const searchRelease = new Dependency(Math.random(), searchFamily, '2.0', true, []);
+    const productFamily = new Family();
+    const productForOlderRelease = new Dependency(Math.random(), productFamily, '8.0', true, [olderRelease]);
+
+    const storedDependencies: Dependency[] = [olderRelease, searchRelease, productForOlderRelease];
+    const versionFinder = new VersionFinder(storedDependencies);
+
+    const result = versionFinder.whatProductsCanIRunWithDependency([searchRelease]);
+    expect(result).has.same.members([productForOlderRelease]);
   });
 });

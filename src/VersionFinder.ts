@@ -11,22 +11,45 @@ export class VersionFinder {
   whatProductsCanIRunWithDependency(productsToQuery: Dependency[]): Dependency[] {
     const foundDependencies: Dependency[] = [];
 
-    this.dependencies.forEach((dependency) => {
-      productsToQuery.forEach((productToQuery) => {
-        if (dependency.dependencies.includes(productToQuery)) {
-          foundDependencies.push(dependency);
+    const allFamilies: Family[] = this.getFamiliesFromDependency(this.dependencies);
+    const searchFamilies: Family[] = this.getFamiliesFromDependency(productsToQuery);
+
+    allFamilies.forEach((family) => {
+      const familyReleases = this.dependencies.filter((fam) => {
+        return fam.family === family;
+      });
+      familyReleases.forEach((familyRelease) => {
+        if (
+          familyRelease.dependencies.some((dependency) => {
+            return searchFamilies.includes(dependency.family);
+          })
+        ) {
+          if (familyRelease.supported && !this.isTooNew(familyRelease, productsToQuery)) {
+            foundDependencies.push(familyRelease);
+          }
         }
       });
     });
 
-    const foundFamilies: Family[] = this.getFamiliesFromDependency(foundDependencies);
-
     const foundDependenciesWithLatestFromEachFamily: Dependency[] = this.removeEarlierDependenciesFromDuplicateFamilies(
       foundDependencies,
-      foundFamilies,
+      allFamilies,
     );
 
     return foundDependenciesWithLatestFromEachFamily;
+  }
+  isTooNew(familyRelease: Dependency, productsToQuery: Dependency[]): boolean {
+    let isTooNew = false;
+    familyRelease.dependencies.forEach((familyDependency) => {
+      const productToQuery = productsToQuery.find((productToQuery) => {
+        return familyDependency.family === productToQuery.family;
+      });
+      const re = Dependency.compare(familyDependency, productToQuery);
+      if (re < 0) {
+        isTooNew = true;
+      }
+    });
+    return isTooNew;
   }
 
   findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
