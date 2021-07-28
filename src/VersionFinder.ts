@@ -44,8 +44,7 @@ export class VersionFinder {
       const productToQuery = productsToQuery.find((productToQuery) => {
         return familyDependency.family === productToQuery.family;
       });
-      const re = Dependency.compare(familyDependency, productToQuery);
-      if (re < 0) {
+      if (Dependency.isGreaterThan(productToQuery, familyDependency)) {
         isTooNew = true;
       }
     });
