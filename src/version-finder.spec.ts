@@ -9,7 +9,7 @@ describe('get pre-reqs for releases', () => {
     const versionFinder = new VersionFinder([dependency]);
 
     const result = versionFinder.findDependenciesFor([dependency]);
-    expect(result.length).to.equal(1);
+    expect(result).has.same.members([dependency]);
   });
   it('should return only the entry when no dependency for search exist', () => {
     const dependency = new Dependency(Math.random(), new Family(), '', true, []);
@@ -18,7 +18,7 @@ describe('get pre-reqs for releases', () => {
     const versionFinder = new VersionFinder(storedDependencies);
 
     const result = versionFinder.findDependenciesFor([dependency]);
-    expect(result.length).to.equal(1);
+    expect(result).has.same.members([dependency]);
   });
   it('should return all dependency linked by dependency', () => {
     const relatedDependency = new Dependency(Math.random(), new Family(), '', true, []);
@@ -27,7 +27,7 @@ describe('get pre-reqs for releases', () => {
     const versionFinder = new VersionFinder(storedDependencies);
 
     const result = versionFinder.findDependenciesFor([dependency]);
-    expect(result.length).to.equal(2);
+    expect(result).has.same.members([dependency, relatedDependency]);
   });
   it('should return dependency of dependency', () => {
     const secondLevelDependency = new Dependency(Math.random(), new Family(), '', true, []);
@@ -37,7 +37,7 @@ describe('get pre-reqs for releases', () => {
     const versionFinder = new VersionFinder(storedDependencies);
 
     const result = versionFinder.findDependenciesFor([dependency]);
-    expect(result.length).to.equal(3);
+    expect(result).has.same.members([dependency, firstLevelDependency, secondLevelDependency]);
   });
   it('should only return a single dependency of each family', () => {
     const familyX = new Family();
@@ -63,7 +63,11 @@ describe('get pre-reqs for releases', () => {
       searchDependencyWithFirstDependency,
       searchDependencyWithSecondDependency,
     ]);
-    expect(result.length).to.equal(3);
+    expect(result).has.same.members([
+      searchDependencyWithFirstDependency,
+      searchDependencyWithSecondDependency,
+      firstDependencyFromFamilyX,
+    ]);
   });
   it('should only return the latest dependency of each family', () => {
     const familyX = new Family();
@@ -99,7 +103,7 @@ describe('get pre-reqs for releases', () => {
     const versionFinder = new VersionFinder(storedDependencies);
 
     const result = versionFinder.findDependenciesFor([searchDependency]);
-    expect(result.length).to.equal(1);
+    expect(result).has.same.members([searchDependency]);
   });
 });
 
