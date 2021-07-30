@@ -80,16 +80,14 @@ export class VersionFinder {
   }
 
   getFamiliesFromDependencies(foundDependencies: Dependency[]): Family[] {
-    const foundFamilies: Family[] = [];
-    foundDependencies.forEach((dep) => {
-      const matchingDependencies = foundFamilies.filter((family) => {
-        return family === dep.family;
-      });
-      if (matchingDependencies.length < 1) {
-        foundFamilies.push(dep.family);
-      }
-    });
-    return foundFamilies;
+    const families = [
+      ...new Set(
+        foundDependencies.map((dependency) => {
+          return dependency.family;
+        }),
+      ),
+    ];
+    return families;
   }
 
   removeEarlierDependenciesFromDuplicateFamilies(
