@@ -38,6 +38,7 @@ export class VersionFinder {
 
     return foundDependenciesWithLatestFromEachFamily;
   }
+
   isTooNew(familyRelease: Dependency, productsToQuery: Dependency[]): boolean {
     let isTooNew = false;
     familyRelease.dependencies.forEach((familyDependency) => {
