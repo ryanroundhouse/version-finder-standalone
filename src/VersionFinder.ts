@@ -51,21 +51,26 @@ export class VersionFinder {
     return isTooNew;
   }
 
-  findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
-    const foundDependencies: Dependency[] = searchDependencies;
-
-    searchDependencies.forEach((dep) => {
-      dep.dependencies.forEach((subDep) => {
-        subDep.dependencies.forEach((subSubDep) => {
-          if (subSubDep.supported) {
-            foundDependencies.push(subSubDep);
-          }
-        });
-        if (subDep.supported) {
-          foundDependencies.push(subDep);
+  findSubDependencies(dependencies: Dependency[], families: Family[]): Dependency[] {
+    dependencies.forEach((dependency) => {
+      dependency.dependencies.forEach((subDependency) => {
+        if (subDependency.supported) {
+          dependencies.push(subDependency);
         }
       });
     });
+    const newFamilies = this.getFamiliesFromDependency(dependencies);
+    if (newFamilies > families) {
+      return this.findSubDependencies(dependencies, newFamilies);
+    } else {
+      return dependencies;
+    }
+  }
+
+  findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
+    const searchDependencyFamilies = this.getFamiliesFromDependency(searchDependencies);
+
+    const foundDependencies = this.findSubDependencies(searchDependencies, searchDependencyFamilies);
 
     const foundFamilies: Family[] = this.getFamiliesFromDependency(foundDependencies);
 

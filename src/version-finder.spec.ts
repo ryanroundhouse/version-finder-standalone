@@ -60,6 +60,25 @@ describe('get pre-reqs for releases', () => {
     const result = versionFinder.findDependenciesFor([dependency]);
     expect(result).has.same.members([dependency, firstLevelDependency, secondLevelDependency]);
   });
+  it('should look for deeper dependencies until no new families are discovered', () => {
+    const superBottomFamily = new Family();
+    const superBottomDependency = new Dependency(Math.random(), superBottomFamily, '', true, []);
+    const bottomFamily = new Family();
+    const bottomDependency = new Dependency(Math.random(), bottomFamily, '', true, [superBottomDependency]);
+    const middleFamily = new Family();
+    const middleDependency = new Dependency(Math.random(), middleFamily, '', true, [bottomDependency]);
+    const topFamily = new Family();
+    const topDependency = new Dependency(Math.random(), topFamily, '', true, [middleDependency]);
+
+    const versionManager = new VersionManager(
+      [superBottomFamily, bottomFamily, middleFamily, topFamily],
+      [superBottomDependency, bottomDependency, middleDependency, topDependency],
+    );
+    const versionFinder = new VersionFinder(versionManager);
+
+    const result = versionFinder.findDependenciesFor([topDependency]);
+    expect(result).has.same.members([topDependency, middleDependency, bottomDependency, superBottomDependency]);
+  });
   it('should only return a single dependency of each family', () => {
     const familyX = new Family();
     const firstDependencyFromFamilyX = new Dependency(Math.random(), familyX, '', true, []);
