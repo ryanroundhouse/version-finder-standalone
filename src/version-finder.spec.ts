@@ -2,39 +2,60 @@ import { expect } from 'chai';
 import Dependency from './Dependency';
 import Family from './Family';
 import VersionFinder from './VersionFinder';
+import { VersionManager } from './VersionManager';
 
 describe('get pre-reqs for releases', () => {
   it('should find a single entry when only that single entry exists', () => {
+    const family = new Family();
     const dependency = new Dependency(Math.random(), new Family(), '', true, []);
-    const versionFinder = new VersionFinder([dependency]);
+    const versionManager = new VersionManager([family], [dependency]);
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.findDependenciesFor([dependency]);
     expect(result).has.same.members([dependency]);
   });
   it('should return only the entry when no dependency for search exist', () => {
-    const dependency = new Dependency(Math.random(), new Family(), '', true, []);
-    const unrelatedDependency = new Dependency(Math.random(), new Family(), '', true, []);
-    const storedDependencies: Dependency[] = [dependency, unrelatedDependency];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const dependencyFamily = new Family();
+    const dependency = new Dependency(Math.random(), dependencyFamily, '', true, []);
+    const unrelatedDependencyFamily = new Family();
+    const unrelatedDependency = new Dependency(Math.random(), unrelatedDependencyFamily, '', true, []);
+    const versionManager = new VersionManager(
+      [dependencyFamily, unrelatedDependencyFamily],
+      [dependency, unrelatedDependency],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.findDependenciesFor([dependency]);
     expect(result).has.same.members([dependency]);
   });
   it('should return all dependency linked by dependency', () => {
-    const relatedDependency = new Dependency(Math.random(), new Family(), '', true, []);
-    const dependency = new Dependency(Math.random(), new Family(), '', true, [relatedDependency]);
-    const storedDependencies: Dependency[] = [dependency, relatedDependency];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const relatedDependencyFamily = new Family();
+    const relatedDependency = new Dependency(Math.random(), relatedDependencyFamily, '', true, []);
+    const dependencyFamily = new Family();
+    const dependency = new Dependency(Math.random(), dependencyFamily, '', true, [relatedDependency]);
+    const versionManager = new VersionManager(
+      [relatedDependencyFamily, dependencyFamily],
+      [dependency, relatedDependency],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.findDependenciesFor([dependency]);
     expect(result).has.same.members([dependency, relatedDependency]);
   });
   it('should return dependency of dependency', () => {
-    const secondLevelDependency = new Dependency(Math.random(), new Family(), '', true, []);
-    const firstLevelDependency = new Dependency(Math.random(), new Family(), '', true, [secondLevelDependency]);
-    const dependency = new Dependency(Math.random(), new Family(), '', true, [firstLevelDependency]);
-    const storedDependencies: Dependency[] = [dependency, firstLevelDependency, secondLevelDependency];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const secondLevelDependencyFamily = new Family();
+    const secondLevelDependency = new Dependency(Math.random(), secondLevelDependencyFamily, '', true, []);
+    const firstLevelDependencyFamily = new Family();
+    const firstLevelDependency = new Dependency(Math.random(), firstLevelDependencyFamily, '', true, [
+      secondLevelDependency,
+    ]);
+    const dependencyFamily = new Family();
+    const dependency = new Dependency(Math.random(), dependencyFamily, '', true, [firstLevelDependency]);
+    const versionManager = new VersionManager(
+      [secondLevelDependencyFamily, firstLevelDependencyFamily, dependencyFamily],
+      [dependency, firstLevelDependency, secondLevelDependency],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.findDependenciesFor([dependency]);
     expect(result).has.same.members([dependency, firstLevelDependency, secondLevelDependency]);
@@ -43,21 +64,33 @@ describe('get pre-reqs for releases', () => {
     const familyX = new Family();
     const firstDependencyFromFamilyX = new Dependency(Math.random(), familyX, '', true, []);
     const secondDependencyFromFamilyX = new Dependency(Math.random(), familyX, '', true, []);
+    const searchDependencyWithFirstDependencyFamily = new Family();
+    const searchDependencyWithFirstDependency = new Dependency(
+      Math.random(),
+      searchDependencyWithFirstDependencyFamily,
+      '',
+      true,
+      [firstDependencyFromFamilyX],
+    );
+    const searchDependencyWithSecondDependencyFamily = new Family();
+    const searchDependencyWithSecondDependency = new Dependency(
+      Math.random(),
+      searchDependencyWithSecondDependencyFamily,
+      '',
+      true,
+      [secondDependencyFromFamilyX],
+    );
 
-    const searchDependencyWithFirstDependency = new Dependency(Math.random(), new Family(), '', true, [
-      firstDependencyFromFamilyX,
-    ]);
-    const searchDependencyWithSecondDependency = new Dependency(Math.random(), new Family(), '', true, [
-      secondDependencyFromFamilyX,
-    ]);
-
-    const storedDependencies: Dependency[] = [
-      firstDependencyFromFamilyX,
-      secondDependencyFromFamilyX,
-      searchDependencyWithFirstDependency,
-      searchDependencyWithSecondDependency,
-    ];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const versionManager = new VersionManager(
+      [familyX, searchDependencyWithFirstDependencyFamily, searchDependencyWithSecondDependencyFamily],
+      [
+        firstDependencyFromFamilyX,
+        secondDependencyFromFamilyX,
+        searchDependencyWithFirstDependency,
+        searchDependencyWithSecondDependency,
+      ],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.findDependenciesFor([
       searchDependencyWithFirstDependency,
@@ -73,21 +106,33 @@ describe('get pre-reqs for releases', () => {
     const familyX = new Family();
     const olderDependencyFromFamilyX = new Dependency(Math.random(), familyX, '1.0', true, []);
     const newerDependencyFromFamilyX = new Dependency(Math.random(), familyX, '2.0', true, []);
+    const searchDependencyWithFirstDependencyFamily = new Family();
+    const searchDependencyWithFirstDependency = new Dependency(
+      Math.random(),
+      searchDependencyWithFirstDependencyFamily,
+      '',
+      true,
+      [olderDependencyFromFamilyX],
+    );
+    const searchDependencyWithSecondDependencyFamily = new Family();
+    const searchDependencyWithSecondDependency = new Dependency(
+      Math.random(),
+      searchDependencyWithSecondDependencyFamily,
+      '',
+      true,
+      [newerDependencyFromFamilyX],
+    );
 
-    const searchDependencyWithFirstDependency = new Dependency(Math.random(), new Family(), '', true, [
-      olderDependencyFromFamilyX,
-    ]);
-    const searchDependencyWithSecondDependency = new Dependency(Math.random(), new Family(), '', true, [
-      newerDependencyFromFamilyX,
-    ]);
-
-    const storedDependencies: Dependency[] = [
-      olderDependencyFromFamilyX,
-      newerDependencyFromFamilyX,
-      searchDependencyWithFirstDependency,
-      searchDependencyWithSecondDependency,
-    ];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const versionManager = new VersionManager(
+      [familyX, searchDependencyWithFirstDependencyFamily, searchDependencyWithSecondDependencyFamily],
+      [
+        olderDependencyFromFamilyX,
+        newerDependencyFromFamilyX,
+        searchDependencyWithFirstDependency,
+        searchDependencyWithSecondDependency,
+      ],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.findDependenciesFor([
       searchDependencyWithFirstDependency,
@@ -96,11 +141,16 @@ describe('get pre-reqs for releases', () => {
     expect(result.includes(newerDependencyFromFamilyX)).to.be.true;
   });
   it('dont return a prerequisite that is no longer supported', () => {
-    const unsupportedDependency = new Dependency(Math.random(), new Family(), '', false, []);
-    const searchDependency = new Dependency(Math.random(), new Family(), '', true, [unsupportedDependency]);
+    const unsupportedDependencyFamily = new Family();
+    const unsupportedDependency = new Dependency(Math.random(), unsupportedDependencyFamily, '', false, []);
+    const searchDependencyFamily = new Family();
+    const searchDependency = new Dependency(Math.random(), searchDependencyFamily, '', true, [unsupportedDependency]);
 
-    const storedDependencies: Dependency[] = [unsupportedDependency, searchDependency];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const versionManager = new VersionManager(
+      [unsupportedDependencyFamily, searchDependencyFamily],
+      [unsupportedDependency, searchDependency],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.findDependenciesFor([searchDependency]);
     expect(result).has.same.members([searchDependency]);
@@ -109,10 +159,15 @@ describe('get pre-reqs for releases', () => {
 
 describe('get releases for pre-req', () => {
   it('should find a single item if only one release exists', () => {
-    const productToQuery = new Dependency(Math.random(), new Family(), '', true, []);
-    const singleRelease = new Dependency(Math.random(), new Family(), '', true, [productToQuery]);
-    const storedDependencies: Dependency[] = [singleRelease, productToQuery];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const productToQueryFamily = new Family();
+    const productToQuery = new Dependency(Math.random(), productToQueryFamily, '', true, []);
+    const singleReleaseFamily = new Family();
+    const singleRelease = new Dependency(Math.random(), singleReleaseFamily, '', true, [productToQuery]);
+    const versionManager = new VersionManager(
+      [productToQueryFamily, singleReleaseFamily],
+      [singleRelease, productToQuery],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.whatProductsCanIRunWithDependency([productToQuery]);
     expect(result).has.same.members([singleRelease]);
@@ -127,23 +182,25 @@ describe('get releases for pre-req', () => {
     const justRightDependency = new Dependency(Math.random(), dependencyFamily, '2.0', true, [queryProduct]);
     const tooNewDependency = new Dependency(Math.random(), dependencyFamily, '3.0', true, [tooNewQueryProduct]);
 
-    const storedDependencies: Dependency[] = [
-      queryProduct,
-      tooNewQueryProduct,
-      tooOldDependency,
-      justRightDependency,
-      tooNewDependency,
-    ];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const versionManager = new VersionManager(
+      [queryProductFamily, dependencyFamily],
+      [queryProduct, tooNewQueryProduct, tooOldDependency, justRightDependency, tooNewDependency],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.whatProductsCanIRunWithDependency([queryProduct]);
     expect(result).has.same.members([justRightDependency]);
   });
   it('shouldnt return dependencies that arent supported', () => {
-    const productToQuery = new Dependency(Math.random(), new Family(), '', true, []);
-    const unsupportedRelease = new Dependency(Math.random(), new Family(), '', false, [productToQuery]);
-    const storedDependencies: Dependency[] = [unsupportedRelease, productToQuery];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const productToQueryFamily = new Family();
+    const productToQuery = new Dependency(Math.random(), productToQueryFamily, '', true, []);
+    const unsupportedReleaseFamily = new Family();
+    const unsupportedRelease = new Dependency(Math.random(), unsupportedReleaseFamily, '', false, [productToQuery]);
+    const versionManager = new VersionManager(
+      [productToQueryFamily, unsupportedReleaseFamily],
+      [unsupportedRelease, productToQuery],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.whatProductsCanIRunWithDependency([productToQuery]);
     expect(result).has.same.members([]);
@@ -155,8 +212,11 @@ describe('get releases for pre-req', () => {
     const productFamily = new Family();
     const productForOlderRelease = new Dependency(Math.random(), productFamily, '8.0', true, [olderRelease]);
 
-    const storedDependencies: Dependency[] = [olderRelease, searchRelease, productForOlderRelease];
-    const versionFinder = new VersionFinder(storedDependencies);
+    const versionManager = new VersionManager(
+      [searchFamily, productFamily],
+      [olderRelease, searchRelease, productForOlderRelease],
+    );
+    const versionFinder = new VersionFinder(versionManager);
 
     const result = versionFinder.whatProductsCanIRunWithDependency([searchRelease]);
     expect(result).has.same.members([productForOlderRelease]);

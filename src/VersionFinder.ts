@@ -1,23 +1,22 @@
 import Dependency from './Dependency';
 import Family from './Family';
+import { VersionManager } from './VersionManager';
 
 export class VersionFinder {
-  dependencies: Dependency[];
+  versionManager: VersionManager;
 
-  constructor(dependencies: Dependency[]) {
-    this.dependencies = dependencies;
+  constructor(versionManager: VersionManager) {
+    this.versionManager = versionManager;
   }
 
   whatProductsCanIRunWithDependency(productsToQuery: Dependency[]): Dependency[] {
     const foundDependencies: Dependency[] = [];
 
-    const allFamilies: Family[] = this.getFamiliesFromDependency(this.dependencies);
+    const allFamilies: Family[] = this.getFamiliesFromDependency(this.versionManager.getDependencies());
     const searchFamilies: Family[] = this.getFamiliesFromDependency(productsToQuery);
 
     allFamilies.forEach((family) => {
-      const familyReleases = this.dependencies.filter((fam) => {
-        return fam.family === family;
-      });
+      const familyReleases = this.versionManager.getDependenciesByFamily(family);
       familyReleases.forEach((familyRelease) => {
         if (
           familyRelease.dependencies.some((dependency) => {
