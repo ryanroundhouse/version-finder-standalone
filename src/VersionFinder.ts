@@ -12,8 +12,8 @@ export class VersionFinder {
   whatProductsCanIRunWithDependency(productsToQuery: Dependency[]): Dependency[] {
     const foundDependencies: Dependency[] = [];
 
-    const allFamilies: Family[] = this.getFamiliesFromDependency(this.versionManager.getDependencies());
-    const searchFamilies: Family[] = this.getFamiliesFromDependency(productsToQuery);
+    const allFamilies: Family[] = this.getFamiliesFromDependencies(this.versionManager.getDependencies());
+    const searchFamilies: Family[] = this.getFamiliesFromDependencies(productsToQuery);
 
     allFamilies.forEach((family) => {
       const familyReleases = this.versionManager.getDependenciesByFamily(family);
@@ -59,7 +59,7 @@ export class VersionFinder {
         }
       });
     });
-    const newFamilies = this.getFamiliesFromDependency(dependencies);
+    const newFamilies = this.getFamiliesFromDependencies(dependencies);
     if (newFamilies > families) {
       return this.findSubDependencies(dependencies, newFamilies);
     } else {
@@ -68,12 +68,9 @@ export class VersionFinder {
   }
 
   findDependenciesFor(searchDependencies: Dependency[]): Dependency[] {
-    const searchDependencyFamilies = this.getFamiliesFromDependency(searchDependencies);
-
+    const searchDependencyFamilies = this.getFamiliesFromDependencies(searchDependencies);
     const foundDependencies = this.findSubDependencies(searchDependencies, searchDependencyFamilies);
-
-    const foundFamilies: Family[] = this.getFamiliesFromDependency(foundDependencies);
-
+    const foundFamilies: Family[] = this.getFamiliesFromDependencies(foundDependencies);
     const foundDependenciesWithLatestFromEachFamily: Dependency[] = this.removeEarlierDependenciesFromDuplicateFamilies(
       foundDependencies,
       foundFamilies,
@@ -82,7 +79,7 @@ export class VersionFinder {
     return [...new Set(foundDependenciesWithLatestFromEachFamily)];
   }
 
-  getFamiliesFromDependency(foundDependencies: Dependency[]): Family[] {
+  getFamiliesFromDependencies(foundDependencies: Dependency[]): Family[] {
     const foundFamilies: Family[] = [];
     foundDependencies.forEach((dep) => {
       const matchingDependencies = foundFamilies.filter((family) => {
